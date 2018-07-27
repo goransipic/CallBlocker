@@ -19,7 +19,10 @@ class MainActivity : AppCompatActivity() {
                     .commitNow()
         }
 
-        Permissions.check(this, Manifest.permission.READ_PHONE_STATE, "Read Phone State permission is required.",
+        Permissions.check(this,
+                arrayOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.CALL_PHONE),
+                "Read Phone State permission is required.",
+                Permissions.Options(),
                 object : PermissionHandler() {
                     override fun onGranted() {
                         //do your task.

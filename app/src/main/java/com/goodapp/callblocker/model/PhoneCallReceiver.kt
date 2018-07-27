@@ -6,6 +6,9 @@ import android.telephony.TelephonyManager
 import android.content.Intent
 import android.widget.Toast
 import java.util.*
+import java.lang.reflect.AccessibleObject.setAccessible
+import androidx.core.content.ContextCompat.getSystemService
+import com.android.internal.telephony.ITelephony
 
 
 class PhoneCallReceiver : BroadcastReceiver() {
@@ -38,7 +41,24 @@ class PhoneCallReceiver : BroadcastReceiver() {
 
     //Derived classes should override these to respond to specific events of interest
     private fun onIncomingCallStarted(ctx: Context, number: String, start: Date?) {
-        Toast.makeText(ctx, number, Toast.LENGTH_LONG).show()
+
+        val tm = ctx.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+        val telephonyService: ITelephony
+        try {
+            val m = tm.javaClass.getDeclaredMethod("getITelephony")
+
+            m.isAccessible = true
+            telephonyService = m.invoke(tm) as ITelephony
+
+            if (number != null) {
+                telephonyService.endCall()
+                Toast.makeText(ctx, "Ending the call from: $number", Toast.LENGTH_SHORT).show()
+            }
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
     }
     private fun onOutgoingCallStarted(ctx: Context, number: String, start: Date?) {
 
