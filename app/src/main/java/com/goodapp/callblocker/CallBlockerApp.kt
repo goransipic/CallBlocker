@@ -3,10 +3,10 @@ package com.goodapp.callblocker
 import android.app.Application
 import com.extensions.DelegatesExt
 
-class AppCallBlocker : Application(){
+class CallBlockerApp : Application(){
 
     companion object {
-        var instance: AppCallBlocker by DelegatesExt.notNullSingleValue()
+        var instance: CallBlockerApp by DelegatesExt.notNullSingleValue()
     }
 
     override fun onCreate() {

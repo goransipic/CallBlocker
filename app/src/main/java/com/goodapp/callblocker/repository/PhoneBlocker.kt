@@ -1,25 +1,30 @@
-package com.goodapp.callblocker.model
+package com.goodapp.callblocker.repository
 
 import android.content.Context
-import android.content.Intent
-import android.os.Handler
-import android.widget.Toast
 import androidx.work.Worker
-import com.goodapp.callblocker.AppCallBlocker
-import android.os.Looper
+import com.goodapp.callblocker.CallBlockerApp
+import android.support.v4.app.NotificationCompat
 import android.telephony.TelephonyManager
 import com.android.internal.telephony.ITelephony
-import com.goodapp.callblocker.ui.OverlayPhoneActivity
+import com.goodapp.callblocker.R
 import java.util.*
+import android.support.v4.app.NotificationManagerCompat
+import android.app.NotificationManager
+import android.app.NotificationChannel
+import android.os.Build
+import android.telephony.PhoneNumberUtils
 
 
 class PhoneBlocker : Worker() {
+
+    private val phoneRepository = PhoneRepository(CallBlockerApp.instance, LocalPhoneContacts(CallBlockerApp.instance))
 
     companion object {
         private var lastState = TelephonyManager.CALL_STATE_IDLE
         private var callStartTime: Date? = null
         private var isIncoming: Boolean = false
         private var savedNumber: String? = null   //because the passed incoming is only valid in ringing
+        const val CHANNEL_ID: String = "phone_blocker"
     }
 
     override fun doWork(): Result {
@@ -35,31 +40,14 @@ class PhoneBlocker : Worker() {
             state = TelephonyManager.CALL_STATE_RINGING
         }
 
-        onCallStateChanged(AppCallBlocker.instance, state, number)
+        onCallStateChanged(CallBlockerApp.instance, state, number)
 
         return Result.SUCCESS
     }
 
     //Derived classes should override these to respond to specific events of interest
     private fun onIncomingCallStarted(ctx: Context, number: String?, start: Date?) {
-
-        val tm = ctx.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-        val telephonyService: ITelephony
-        try {
-            val m = tm.javaClass.getDeclaredMethod("getITelephony")
-
-            m.isAccessible = true
-            telephonyService = m.invoke(tm) as ITelephony
-
-            if (number != null) {
-                telephonyService.endCall()
-                ctx.startActivity(Intent(ctx,OverlayPhoneActivity::class.java))
-            }
-
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-
+        phoneRepository.isOnBlackList(number)
     }
 
     private fun onOutgoingCallStarted(ctx: Context, number: String?, start: Date?) {

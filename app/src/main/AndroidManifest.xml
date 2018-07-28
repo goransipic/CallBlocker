@@ -4,9 +4,10 @@
 
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
 
     <application
-        android:name=".AppCallBlocker"
+        android:name=".CallBlockerApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -22,7 +23,7 @@
         </activity>
 
         <receiver
-            android:name=".model.PhoneCallReceiver"
+            android:name=".repository.PhoneCallReceiver"
             android:enabled="true">
             <intent-filter>
                 <action android:name="android.intent.action.PHONE_STATE" />

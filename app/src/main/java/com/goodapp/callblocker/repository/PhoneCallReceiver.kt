@@ -1,4 +1,4 @@
-package com.goodapp.callblocker.model
+package com.goodapp.callblocker.repository
 
 import android.content.BroadcastReceiver
 import android.content.Context

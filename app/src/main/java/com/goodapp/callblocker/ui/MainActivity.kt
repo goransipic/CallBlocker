@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         Permissions.check(this,
-                arrayOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.CALL_PHONE),
+                arrayOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.CALL_PHONE, Manifest.permission.READ_CONTACTS),
                 "Read Phone State permission is required.",
                 Permissions.Options(),
                 object : PermissionHandler() {
