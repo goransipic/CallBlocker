@@ -1,6 +1,7 @@
 package com.goodapp.callblocker.model
 
 import android.content.Context
+import android.content.Intent
 import android.os.Handler
 import android.widget.Toast
 import androidx.work.Worker
@@ -8,6 +9,7 @@ import com.goodapp.callblocker.AppCallBlocker
 import android.os.Looper
 import android.telephony.TelephonyManager
 import com.android.internal.telephony.ITelephony
+import com.goodapp.callblocker.ui.OverlayPhoneActivity
 import java.util.*
 
 
@@ -51,7 +53,7 @@ class PhoneBlocker : Worker() {
 
             if (number != null) {
                 telephonyService.endCall()
-                Toast.makeText(ctx, "Ending the call from: $number", Toast.LENGTH_SHORT).show()
+                ctx.startActivity(Intent(ctx,OverlayPhoneActivity::class.java))
             }
 
         } catch (e: Exception) {
