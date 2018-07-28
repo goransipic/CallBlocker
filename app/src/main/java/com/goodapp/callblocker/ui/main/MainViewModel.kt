@@ -1,6 +1,7 @@
 package com.goodapp.callblocker.ui.main
 
-import androidx.lifecycle.ViewModel
+import android.arch.lifecycle.ViewModel
+
 
 class MainViewModel : ViewModel() {
     // TODO: Implement the ViewModel

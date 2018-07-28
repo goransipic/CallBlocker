@@ -5,9 +5,9 @@ import android.content.Context
 import android.telephony.TelephonyManager
 import android.content.Intent
 import android.widget.Toast
+import androidx.work.WorkManager
 import java.util.*
 import java.lang.reflect.AccessibleObject.setAccessible
-import androidx.core.content.ContextCompat.getSystemService
 import com.android.internal.telephony.ITelephony
 
 
@@ -21,7 +21,6 @@ class PhoneCallReceiver : BroadcastReceiver() {
 
 
     override fun onReceive(context: Context, intent: Intent) {
-
         //We listen to two intents.  The new outgoing call only tells us of an outgoing call.  We use it to get the number.
         val stateStr = intent.extras!!.getString(TelephonyManager.EXTRA_STATE)
         val number = intent.extras!!.getString(TelephonyManager.EXTRA_INCOMING_NUMBER)

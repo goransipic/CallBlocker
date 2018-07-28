@@ -1,8 +1,8 @@
 package com.goodapp.callblocker
 
 import android.Manifest
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v7.app.AppCompatActivity
 import com.goodapp.callblocker.ui.main.MainFragment
 import com.nabinbhandari.android.permissions.PermissionHandler
 import com.nabinbhandari.android.permissions.Permissions
