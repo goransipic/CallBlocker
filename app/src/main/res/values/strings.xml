@@ -3,4 +3,6 @@
     <string name="title_message">Phone Blocker Just Blocked A Call</string>
     <string name="content_message_part_1">Someone just tried to call you from</string>
     <string name="content_message_part_2">, but Phone Blocker has block the call.</string>
+    <string name="blocked_calls">Blocked calls</string>
+    <string name="suspicious_calls">Suspicious calls</string>
 </resources>

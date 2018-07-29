@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_blocked"
+        android:icon="@drawable/blocked_drawable"
+        android:title="@string/blocked_calls" />
+    <item
+        android:id="@+id/action_suspicious"
+        android:icon="@drawable/blocked_drawable"
+        android:title="@string/suspicious_calls" />
+</menu>
