@@ -22,6 +22,8 @@ import com.goodapp.callblocker.model.PhoneStatus
 import com.goodapp.callblocker.model.ScamCall
 import com.goodapp.callblocker.model.SuspiciousCall
 import com.goodapp.callblocker.repository.db.CallBlockerDb
+import com.goodapp.callblocker.repository.db.ScamItem
+import com.goodapp.callblocker.repository.db.SuspiciousItem
 import com.goodapp.callblocker.ui.OverlayPhoneActivity
 import io.reactivex.Observable
 import java.util.*
@@ -46,10 +48,12 @@ class PhoneRepository(private val context: Context, private val checkPhoneState:
                         contentValues.apply {
                             put("name", "Some Elvis")
                             put("phoneNumber", "425-950-1212")
+                            put("date", Date().time)
                             db.insert(SUSPICIOUS_TABLE, SQLiteDatabase.CONFLICT_REPLACE, contentValues)
                             clear()
-                            contentValues.put("name", "Some Elvis")
-                            contentValues.put("phoneNumber", "253-950-1212")
+                            put("name", "Some Elvis")
+                            put("phoneNumber", "253-950-1212")
+                            put("date", Date().time)
                             db.insert(SCAM_TABLE, SQLiteDatabase.CONFLICT_REPLACE, contentValues)
                         }
                     }
@@ -74,11 +78,15 @@ class PhoneRepository(private val context: Context, private val checkPhoneState:
         when (phoneStatus) {
             is NormalCall -> processNormalCall(context, phoneStatus.phoneNumber)
             is SuspiciousCall -> processSuspiciousCall(context, phoneStatus)
-            is ScamCall -> processScamCall(context, phoneStatus.phoneNumber)
+            is ScamCall -> processScamCall(context, phoneStatus)
         }
     }
 
-    private fun processScamCall(ctx: Context, number: String?) {
+    private fun processScamCall(ctx: Context, scumItem: ScamCall) {
+
+        callBlockerDb.phoneCallsDao().insertScamItem(ScamItem(scumItem.name
+                ?: "Unknown", PhoneNumberUtils.formatNumber(scumItem.phoneNumber) ?: "Unknown", Date().time))
+
         val tm = ctx.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
         val telephonyService: ITelephony
         try {
@@ -87,18 +95,18 @@ class PhoneRepository(private val context: Context, private val checkPhoneState:
             m.isAccessible = true
             telephonyService = m.invoke(tm) as ITelephony
 
-            if (number != null) {
+            if (scumItem.phoneNumber != null) {
                 telephonyService.endCall()
                 createNotificationChannel(ctx)
                 val mBuilder = NotificationCompat.Builder(ctx, PhoneBlocker.CHANNEL_ID)
                         .setSmallIcon(R.drawable.ic_stat_name)
                         .setContentTitle(context.getString(R.string.title_message))
-                        .setContentText(context.getString(R.string.content_message_part_1) + " " + PhoneNumberUtils.formatNumber(number, Locale.getDefault().country) + context.getString(R.string.content_message_part_2))
+                        .setContentText(context.getString(R.string.content_message_part_1) + " " + PhoneNumberUtils.formatNumber(scumItem.phoneNumber, Locale.getDefault().country) + context.getString(R.string.content_message_part_2))
                         .setPriority(NotificationCompat.PRIORITY_HIGH)
                         .setDefaults(NotificationCompat.DEFAULT_SOUND)
                         .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                         .setStyle(NotificationCompat.BigTextStyle()
-                                .bigText(context.getString(R.string.content_message_part_1) + " " + PhoneNumberUtils.formatNumber(number, Locale.getDefault().country) + context.getString(R.string.content_message_part_2)))
+                                .bigText(context.getString(R.string.content_message_part_1) + " " + PhoneNumberUtils.formatNumber(scumItem.phoneNumber, Locale.getDefault().country) + context.getString(R.string.content_message_part_2)))
 
                 val notificationManager = NotificationManagerCompat.from(ctx)
 
@@ -112,6 +120,8 @@ class PhoneRepository(private val context: Context, private val checkPhoneState:
     }
 
     private fun processSuspiciousCall(ctx: Context, suspiciousCall: SuspiciousCall) {
+        callBlockerDb.phoneCallsDao().insertSuspiciousItem(SuspiciousItem(suspiciousCall.name
+                ?: "Unknown", PhoneNumberUtils.formatNumber(suspiciousCall.phoneNumber, Locale.getDefault().country), Date().time))
         val intent = Intent(context, OverlayPhoneActivity::class.java)
         intent.putExtra(PHONE_NUMBER, suspiciousCall.phoneNumber)
         context.startActivity(intent)

@@ -7,7 +7,8 @@ import com.goodapp.callblocker.repository.PhoneRepository
 @Entity(tableName = PhoneRepository.SCAM_TABLE)
 data class ScamItem(
         val name: String,
-        val phoneNumber: String) {
+        val phoneNumber: String,
+        val date: Long) {
     @PrimaryKey(autoGenerate = true)
     var id: Long? = null
 }

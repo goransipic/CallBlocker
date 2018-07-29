@@ -7,7 +7,8 @@ import com.goodapp.callblocker.repository.PhoneRepository
 @Entity(tableName = PhoneRepository.SUSPICIOUS_TABLE)
 data class SuspiciousItem(
         val name: String,
-        val phoneNumber: String) {
+        val phoneNumber: String,
+        val date: Long) {
     @PrimaryKey(autoGenerate = true)
     var id: Long? = null
 }
