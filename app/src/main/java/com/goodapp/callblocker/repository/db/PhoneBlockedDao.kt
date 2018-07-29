@@ -4,7 +4,7 @@ import android.arch.persistence.room.Dao
 import android.arch.persistence.room.Insert
 import android.arch.persistence.room.OnConflictStrategy
 import android.arch.persistence.room.Query
-import io.reactivex.Flowable
+import io.reactivex.Single
 
 @Dao
 interface PhoneCallsDao {
@@ -16,9 +16,9 @@ interface PhoneCallsDao {
     fun insertScamItem(callItem: ScamItem)
 
     @Query("SELECT * FROM suspicious_numbers")
-    fun getAllSuspiciousCalls(): Flowable<SuspiciousItem>
+    fun getAllSuspiciousCalls(): Single<List<SuspiciousItem>>
 
     @Query("SELECT * FROM scam")
-    fun getAllScamCalls(): Flowable<ScamItem>
+    fun getAllScamCalls(): Single<List<ScamItem>>
 
 }

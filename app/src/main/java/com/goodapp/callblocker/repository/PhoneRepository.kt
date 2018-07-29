@@ -2,7 +2,12 @@ package com.goodapp.callblocker.repository
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.arch.persistence.db.SupportSQLiteDatabase
+import android.arch.persistence.room.Room
+import android.arch.persistence.room.RoomDatabase
+import android.content.ContentValues
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import android.os.Build
 import android.support.v4.app.NotificationCompat
 import android.support.v4.app.NotificationManagerCompat
@@ -10,10 +15,38 @@ import android.telephony.PhoneNumberUtils
 import android.telephony.TelephonyManager
 import com.android.internal.telephony.ITelephony
 import com.goodapp.callblocker.R
+import com.goodapp.callblocker.repository.db.CallBlockerDb
 
 class PhoneRepository(private val context: Context, private val localPhoneContacts: LocalPhoneContacts) {
 
+    private var callBlockerDbInside: CallBlockerDb
+
+    init {
+        callBlockerDbInside = Room.databaseBuilder(context,
+                CallBlockerDb::class.java, "database-name")
+                .addCallback(object : RoomDatabase.Callback() {
+                    override fun onCreate(db: SupportSQLiteDatabase) {
+                        val contentValues = ContentValues()
+                        contentValues.apply {
+                            put("name", "Some Elvis")
+                            put("phoneNumber", "Some Text")
+                            db.insert("suspicious_numbers", SQLiteDatabase.CONFLICT_REPLACE, contentValues)
+                            clear()
+                            contentValues.put("name", "Some Elvis")
+                            contentValues.put("phoneNumber", "Some Text")
+                            db.insert("suspicious_numbers", SQLiteDatabase.CONFLICT_REPLACE, contentValues)
+                        }
+                    }
+
+                    override fun onOpen(db: SupportSQLiteDatabase) {
+
+                    }
+
+                }).build()
+    }
+
     fun isOnBlackList(phoneNumber: String?) {
+
         localPhoneContacts.isOnBlockList(phoneNumber).subscribe { onIncomingCallStarted(context, it) }
     }
 
