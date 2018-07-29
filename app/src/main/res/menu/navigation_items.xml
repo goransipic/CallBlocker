@@ -2,10 +2,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/action_blocked"
-        android:icon="@drawable/blocked_drawable"
+        android:icon="@drawable/ic_action_blocked"
         android:title="@string/blocked_calls" />
     <item
         android:id="@+id/action_suspicious"
-        android:icon="@drawable/blocked_drawable"
+        android:icon="@drawable/ic_action_name"
         android:title="@string/suspicious_calls" />
 </menu>
