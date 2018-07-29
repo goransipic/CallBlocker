@@ -3,21 +3,13 @@ package com.goodapp.callblocker.repository
 import android.content.Context
 import androidx.work.Worker
 import com.goodapp.callblocker.CallBlockerApp
-import android.support.v4.app.NotificationCompat
 import android.telephony.TelephonyManager
-import com.android.internal.telephony.ITelephony
-import com.goodapp.callblocker.R
 import java.util.*
-import android.support.v4.app.NotificationManagerCompat
-import android.app.NotificationManager
-import android.app.NotificationChannel
-import android.os.Build
-import android.telephony.PhoneNumberUtils
 
 
 class PhoneBlocker : Worker() {
 
-    private val phoneRepository = PhoneRepository(CallBlockerApp.instance, LocalPhoneContacts(CallBlockerApp.instance))
+    private val phoneRepository = PhoneRepository(CallBlockerApp.instance, CheckPhoneState(CallBlockerApp.instance))
 
     companion object {
         private var lastState = TelephonyManager.CALL_STATE_IDLE

@@ -13,6 +13,7 @@ import android.support.v4.app.NotificationCompat
 import android.support.v4.app.NotificationManagerCompat
 import android.telephony.PhoneNumberUtils
 import android.telephony.TelephonyManager
+import android.util.Log
 import com.android.internal.telephony.ITelephony
 import com.goodapp.callblocker.R
 import com.goodapp.callblocker.model.NormalCall
@@ -23,7 +24,7 @@ import com.goodapp.callblocker.repository.db.CallBlockerDb
 import io.reactivex.Observable
 
 
-class PhoneRepository(private val context: Context, private val localPhoneContacts: LocalPhoneContacts) {
+class PhoneRepository(private val context: Context, private val checkPhoneState: CheckPhoneState) {
 
     private var callBlockerDb: CallBlockerDb
 
@@ -58,21 +59,9 @@ class PhoneRepository(private val context: Context, private val localPhoneContac
 
     fun isOnBlackList(phoneNumber: String) {
         Observable.concat(
-                localPhoneContacts.isNormalCall(phoneNumber)
-                        .map { NormalCall(it) },
-                callBlockerDb.phoneCallsDao().getAllSuspiciousCalls()
-                        .toObservable()
-                        .flatMapIterable { it -> it }
-                        .map { it -> it.phoneNumber }
-                        .contains(phoneNumber)
-                        .toObservable()
-                        .map { SuspiciousCall },
-                callBlockerDb.phoneCallsDao().getAllScamCalls().toObservable()
-                        .flatMapIterable { it -> it }
-                        .map { it -> it.phoneNumber }
-                        .contains(phoneNumber)
-                        .toObservable()
-                        .map { ScamCall(phoneNumber) }).take(1).subscribe(this::process)
+                checkPhoneState.isNormalCall(phoneNumber),
+                checkPhoneState.isSuspiciousCall(callBlockerDb, phoneNumber),
+                checkPhoneState.isScamCall(callBlockerDb, phoneNumber)).take(1).subscribe(this::process)
     }
 
     private fun process(phoneStatus: PhoneStatus) {
@@ -98,12 +87,12 @@ class PhoneRepository(private val context: Context, private val localPhoneContac
                 val mBuilder = NotificationCompat.Builder(ctx, PhoneBlocker.CHANNEL_ID)
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setContentTitle(context.getString(R.string.title_message))
-                        .setContentText(context.getString(R.string.content_message_part_1) + PhoneNumberUtils.formatNumber(number) + context.getString(R.string.content_message_part_2))
+                        .setContentText(context.getString(R.string.content_message_part_1) +" "+ PhoneNumberUtils.formatNumber(number) + context.getString(R.string.content_message_part_2))
                         .setPriority(NotificationCompat.PRIORITY_HIGH)
                         .setDefaults(NotificationCompat.DEFAULT_SOUND)
                         .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                         .setStyle(NotificationCompat.BigTextStyle()
-                                .bigText(context.getString(R.string.content_message_part_1) + PhoneNumberUtils.formatNumber(number) + context.getString(R.string.content_message_part_2)))
+                                .bigText(context.getString(R.string.content_message_part_1) +" "+ PhoneNumberUtils.formatNumber(number) + context.getString(R.string.content_message_part_2)))
 
                 val notificationManager = NotificationManagerCompat.from(ctx)
 
@@ -117,11 +106,11 @@ class PhoneRepository(private val context: Context, private val localPhoneContac
     }
 
     private fun processSuspiciousCall() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        Log.d(PhoneRepository::class.java.simpleName,"processSuspiciousCall")
     }
 
     private fun processNormalCall(ctx: Context, number: String?) {
-
+        Log.d(PhoneRepository::class.java.simpleName,"processNormalCall")
     }
 
     private fun createNotificationChannel(context: Context) {
