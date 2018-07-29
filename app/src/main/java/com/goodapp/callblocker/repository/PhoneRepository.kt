@@ -24,6 +24,7 @@ import com.goodapp.callblocker.model.SuspiciousCall
 import com.goodapp.callblocker.repository.db.CallBlockerDb
 import com.goodapp.callblocker.ui.OverlayPhoneActivity
 import io.reactivex.Observable
+import java.util.*
 
 
 class PhoneRepository(private val context: Context, private val checkPhoneState: CheckPhoneState) {
@@ -61,9 +62,9 @@ class PhoneRepository(private val context: Context, private val checkPhoneState:
 
     fun checkPhoneNumber(phoneNumber: String) {
         Observable.concat(
-                checkPhoneState.isNormalCall(phoneNumber),
+                checkPhoneState.isScamCall(callBlockerDb, phoneNumber),
                 checkPhoneState.isSuspiciousCall(callBlockerDb, phoneNumber),
-                checkPhoneState.isScamCall(callBlockerDb, phoneNumber))
+                checkPhoneState.isNormalCall(phoneNumber))
                 .take(1)
                 .subscribe(this::process)
     }
@@ -71,7 +72,7 @@ class PhoneRepository(private val context: Context, private val checkPhoneState:
     private fun process(phoneStatus: PhoneStatus) {
         when (phoneStatus) {
             is NormalCall -> processNormalCall(context, phoneStatus.phoneNumber)
-            is SuspiciousCall -> processSuspiciousCall(context,phoneStatus)
+            is SuspiciousCall -> processSuspiciousCall(context, phoneStatus)
             is ScamCall -> processScamCall(context, phoneStatus.phoneNumber)
         }
     }
@@ -91,12 +92,12 @@ class PhoneRepository(private val context: Context, private val checkPhoneState:
                 val mBuilder = NotificationCompat.Builder(ctx, PhoneBlocker.CHANNEL_ID)
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setContentTitle(context.getString(R.string.title_message))
-                        .setContentText(context.getString(R.string.content_message_part_1) +" "+ PhoneNumberUtils.formatNumber(number) + context.getString(R.string.content_message_part_2))
+                        .setContentText(context.getString(R.string.content_message_part_1) + " " + PhoneNumberUtils.formatNumber(number, Locale.getDefault().country) + context.getString(R.string.content_message_part_2))
                         .setPriority(NotificationCompat.PRIORITY_HIGH)
                         .setDefaults(NotificationCompat.DEFAULT_SOUND)
                         .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                         .setStyle(NotificationCompat.BigTextStyle()
-                                .bigText(context.getString(R.string.content_message_part_1) +" "+ PhoneNumberUtils.formatNumber(number) + context.getString(R.string.content_message_part_2)))
+                                .bigText(context.getString(R.string.content_message_part_1) + " " + PhoneNumberUtils.formatNumber(number, Locale.getDefault().country) + context.getString(R.string.content_message_part_2)))
 
                 val notificationManager = NotificationManagerCompat.from(ctx)
 
@@ -110,14 +111,14 @@ class PhoneRepository(private val context: Context, private val checkPhoneState:
     }
 
     private fun processSuspiciousCall(ctx: Context, suspiciousCall: SuspiciousCall) {
-        if (suspiciousCall.phoneNumber != null){
-            context.startActivity(Intent(context,OverlayPhoneActivity::class.java))
+        if (suspiciousCall.phoneNumber != null) {
+            context.startActivity(Intent(context, OverlayPhoneActivity::class.java))
         }
 
     }
 
     private fun processNormalCall(ctx: Context, number: String?) {
-        Log.d(PhoneRepository::class.java.simpleName,"processNormalCall")
+        Log.d(PhoneRepository::class.java.simpleName, "processNormalCall")
     }
 
     private fun createNotificationChannel(context: Context) {
