@@ -6,7 +6,7 @@ import io.reactivex.Observable
 
 class LocalPhoneContacts(private val context: Context) {
 
-    fun isOnBlockList(phoneNumber: String?): Observable<String> {
+    fun isNormalCall(phoneNumber: String?): Observable<String> {
 
         return Observable.create<String> {
             val phoneNumberFormatted = phoneNumber?.replace("\\D+".toRegex(), "")
@@ -27,19 +27,13 @@ class LocalPhoneContacts(private val context: Context) {
 
             if (cursor.count > 0) {
                 while (cursor.moveToNext()) {
-                    var contactNumber: String = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)).replace("\\D+".toRegex(),"")
+                    var contactNumber: String = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)).replace("\\D+".toRegex(), "")
                     if (phoneNumberFormatted != null && phoneNumberFormatted == contactNumber) {
+                        it.onNext(phoneNumber)
                         it.onComplete()
                         return@create
                     }
                 }
-                if (phoneNumber != null) {
-                    it.onNext(phoneNumber)
-                    it.onComplete()
-                } else {
-                    it.onComplete()
-                }
-
             }
             it.onComplete()
         }

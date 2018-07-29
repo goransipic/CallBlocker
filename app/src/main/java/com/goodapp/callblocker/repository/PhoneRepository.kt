@@ -15,26 +15,37 @@ import android.telephony.PhoneNumberUtils
 import android.telephony.TelephonyManager
 import com.android.internal.telephony.ITelephony
 import com.goodapp.callblocker.R
+import com.goodapp.callblocker.model.NormalCall
+import com.goodapp.callblocker.model.PhoneStatus
+import com.goodapp.callblocker.model.ScamCall
+import com.goodapp.callblocker.model.SuspiciousCall
 import com.goodapp.callblocker.repository.db.CallBlockerDb
+import io.reactivex.Observable
+
 
 class PhoneRepository(private val context: Context, private val localPhoneContacts: LocalPhoneContacts) {
 
-    private var callBlockerDbInside: CallBlockerDb
+    private var callBlockerDb: CallBlockerDb
+
+    companion object {
+        const val SUSPICIOUS_TABLE = "suspicious_numbers"
+        const val SCAM_TABLE = "scam_numbers"
+    }
 
     init {
-        callBlockerDbInside = Room.databaseBuilder(context,
+        callBlockerDb = Room.databaseBuilder(context,
                 CallBlockerDb::class.java, "database-name")
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         val contentValues = ContentValues()
                         contentValues.apply {
                             put("name", "Some Elvis")
-                            put("phoneNumber", "Some Text")
-                            db.insert("suspicious_numbers", SQLiteDatabase.CONFLICT_REPLACE, contentValues)
+                            put("phoneNumber", "425-950-1212")
+                            db.insert(SUSPICIOUS_TABLE, SQLiteDatabase.CONFLICT_REPLACE, contentValues)
                             clear()
                             contentValues.put("name", "Some Elvis")
-                            contentValues.put("phoneNumber", "Some Text")
-                            db.insert("suspicious_numbers", SQLiteDatabase.CONFLICT_REPLACE, contentValues)
+                            contentValues.put("phoneNumber", "253-950-1212")
+                            db.insert(SCAM_TABLE, SQLiteDatabase.CONFLICT_REPLACE, contentValues)
                         }
                     }
 
@@ -45,13 +56,34 @@ class PhoneRepository(private val context: Context, private val localPhoneContac
                 }).build()
     }
 
-    fun isOnBlackList(phoneNumber: String?) {
-
-        localPhoneContacts.isOnBlockList(phoneNumber).subscribe { onIncomingCallStarted(context, it) }
+    fun isOnBlackList(phoneNumber: String) {
+        Observable.concat(
+                localPhoneContacts.isNormalCall(phoneNumber)
+                        .map { NormalCall(it) },
+                callBlockerDb.phoneCallsDao().getAllSuspiciousCalls()
+                        .toObservable()
+                        .flatMapIterable { it -> it }
+                        .map { it -> it.phoneNumber }
+                        .contains(phoneNumber)
+                        .toObservable()
+                        .map { SuspiciousCall },
+                callBlockerDb.phoneCallsDao().getAllScamCalls().toObservable()
+                        .flatMapIterable { it -> it }
+                        .map { it -> it.phoneNumber }
+                        .contains(phoneNumber)
+                        .toObservable()
+                        .map { ScamCall(phoneNumber) }).take(1).subscribe(this::process)
     }
 
-    private fun onIncomingCallStarted(ctx: Context, number: String?) {
+    private fun process(phoneStatus: PhoneStatus) {
+        when (phoneStatus) {
+            is NormalCall -> processNormalCall(context, phoneStatus.phoneNumber)
+            is SuspiciousCall -> processSuspiciousCall()
+            is ScamCall -> processScamCall(context, phoneStatus.phoneNumber)
+        }
+    }
 
+    private fun processScamCall(ctx: Context, number: String?) {
         val tm = ctx.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
         val telephonyService: ITelephony
         try {
@@ -65,13 +97,13 @@ class PhoneRepository(private val context: Context, private val localPhoneContac
                 createNotificationChannel(ctx)
                 val mBuilder = NotificationCompat.Builder(ctx, PhoneBlocker.CHANNEL_ID)
                         .setSmallIcon(R.mipmap.ic_launcher)
-                        .setContentTitle("Phone Blocker Just Blocked A Call")
-                        .setContentText("A telemarketer just tried to call you from ${PhoneNumberUtils.formatNumber(number)}, but Phone Blocker has block the call.")
+                        .setContentTitle(context.getString(R.string.title_message))
+                        .setContentText(context.getString(R.string.content_message_part_1) + PhoneNumberUtils.formatNumber(number) + context.getString(R.string.content_message_part_2))
                         .setPriority(NotificationCompat.PRIORITY_HIGH)
                         .setDefaults(NotificationCompat.DEFAULT_SOUND)
                         .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                         .setStyle(NotificationCompat.BigTextStyle()
-                                .bigText("A telemarketer just tried to call you from ${PhoneNumberUtils.formatNumber(number)}, but Phone Blocker has block the call."))
+                                .bigText(context.getString(R.string.content_message_part_1) + PhoneNumberUtils.formatNumber(number) + context.getString(R.string.content_message_part_2)))
 
                 val notificationManager = NotificationManagerCompat.from(ctx)
 
@@ -82,6 +114,13 @@ class PhoneRepository(private val context: Context, private val localPhoneContac
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    private fun processSuspiciousCall() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    private fun processNormalCall(ctx: Context, number: String?) {
 
     }
 

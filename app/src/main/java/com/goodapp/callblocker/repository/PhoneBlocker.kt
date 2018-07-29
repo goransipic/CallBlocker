@@ -32,12 +32,12 @@ class PhoneBlocker : Worker() {
         val stateStr = inputData.getString(TelephonyManager.EXTRA_STATE)
         val number = inputData.getString(TelephonyManager.EXTRA_INCOMING_NUMBER)
 
-        if (stateStr == TelephonyManager.EXTRA_STATE_IDLE) {
-            state = TelephonyManager.CALL_STATE_IDLE
-        } else if (stateStr == TelephonyManager.EXTRA_STATE_OFFHOOK) {
-            state = TelephonyManager.CALL_STATE_OFFHOOK
-        } else if (stateStr == TelephonyManager.EXTRA_STATE_RINGING) {
-            state = TelephonyManager.CALL_STATE_RINGING
+        number ?: return Result.SUCCESS
+
+        when (stateStr) {
+            TelephonyManager.EXTRA_STATE_IDLE -> state = TelephonyManager.CALL_STATE_IDLE
+            TelephonyManager.EXTRA_STATE_OFFHOOK -> state = TelephonyManager.CALL_STATE_OFFHOOK
+            TelephonyManager.EXTRA_STATE_RINGING -> state = TelephonyManager.CALL_STATE_RINGING
         }
 
         onCallStateChanged(CallBlockerApp.instance, state, number)
@@ -46,7 +46,7 @@ class PhoneBlocker : Worker() {
     }
 
     //Derived classes should override these to respond to specific events of interest
-    private fun onIncomingCallStarted(ctx: Context, number: String?, start: Date?) {
+    private fun onIncomingCallStarted(ctx: Context, number: String, start: Date?) {
         phoneRepository.isOnBlackList(number)
     }
 
@@ -62,7 +62,7 @@ class PhoneBlocker : Worker() {
 
     //Incoming call-  goes from IDLE to RINGING when it rings, to OFFHOOK when it's answered, to IDLE when its hung up
     //Outgoing call-  goes from IDLE to OFFHOOK when it dials out, to IDLE when hung up
-    fun onCallStateChanged(context: Context, state: Int, number: String?) {
+    fun onCallStateChanged(context: Context, state: Int, number: String) {
         if (lastState == state) {
             //No change, debounce extras
             return
@@ -83,13 +83,11 @@ class PhoneBlocker : Worker() {
                 }
             TelephonyManager.CALL_STATE_IDLE ->
                 //Went to idle-  this is the end of a call.  What type depends on previous state(s)
-                if (lastState == TelephonyManager.CALL_STATE_RINGING) {
-                    //Ring but no pickup-  a miss
-                    onMissedCall(context, savedNumber, callStartTime)
-                } else if (isIncoming) {
-                    onIncomingCallEnded(context, savedNumber, callStartTime, Date())
-                } else {
-                    onOutgoingCallEnded(context, savedNumber, callStartTime, Date())
+                when {
+                    lastState == TelephonyManager.CALL_STATE_RINGING -> //Ring but no pickup-  a miss
+                        onMissedCall(context, savedNumber, callStartTime)
+                    isIncoming -> onIncomingCallEnded(context, savedNumber, callStartTime, Date())
+                    else -> onOutgoingCallEnded(context, savedNumber, callStartTime, Date())
                 }
         }
         lastState = state
