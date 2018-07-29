@@ -34,6 +34,7 @@ class PhoneRepository(private val context: Context, private val checkPhoneState:
     companion object {
         const val SUSPICIOUS_TABLE = "suspicious_numbers"
         const val SCAM_TABLE = "scam_numbers"
+        const val PHONE_NUMBER = "phone_number"
     }
 
     init {
@@ -111,30 +112,30 @@ class PhoneRepository(private val context: Context, private val checkPhoneState:
     }
 
     private fun processSuspiciousCall(ctx: Context, suspiciousCall: SuspiciousCall) {
-        if (suspiciousCall.phoneNumber != null) {
-            context.startActivity(Intent(context, OverlayPhoneActivity::class.java))
-        }
-
-    }
-
-    private fun processNormalCall(ctx: Context, number: String?) {
-        Log.d(PhoneRepository::class.java.simpleName, "processNormalCall")
-    }
-
-    private fun createNotificationChannel(context: Context) {
-        // Create the NotificationChannel, but only on API 26+ because
-        // the NotificationChannel class is new and not in the support library
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "channel_name"
-            val description = "channel_description"
-            val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(PhoneBlocker.CHANNEL_ID, name, importance)
-            channel.description = description
-            // Register the channel with the system; you can't change the importance
-            // or other notification behaviors after this
-            val notificationManager = context.getSystemService(NotificationManager::class.java)
-            notificationManager!!.createNotificationChannel(channel)
-        }
+        val intent = Intent(context, OverlayPhoneActivity::class.java)
+        intent.putExtra(PHONE_NUMBER, suspiciousCall.phoneNumber)
+        context.startActivity(intent)
     }
 
 }
+
+private fun processNormalCall(ctx: Context, number: String?) {
+    Log.d(PhoneRepository::class.java.simpleName, "processNormalCall")
+}
+
+private fun createNotificationChannel(context: Context) {
+    // Create the NotificationChannel, but only on API 26+ because
+    // the NotificationChannel class is new and not in the support library
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val name = "channel_name"
+        val description = "channel_description"
+        val importance = NotificationManager.IMPORTANCE_HIGH
+        val channel = NotificationChannel(PhoneBlocker.CHANNEL_ID, name, importance)
+        channel.description = description
+        // Register the channel with the system; you can't change the importance
+        // or other notification behaviors after this
+        val notificationManager = context.getSystemService(NotificationManager::class.java)
+        notificationManager!!.createNotificationChannel(channel)
+    }
+}
+
