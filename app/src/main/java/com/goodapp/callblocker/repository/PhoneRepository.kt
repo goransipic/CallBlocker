@@ -90,7 +90,7 @@ class PhoneRepository(private val context: Context, private val checkPhoneState:
                 telephonyService.endCall()
                 createNotificationChannel(ctx)
                 val mBuilder = NotificationCompat.Builder(ctx, PhoneBlocker.CHANNEL_ID)
-                        .setSmallIcon(R.mipmap.ic_launcher)
+                        .setSmallIcon(R.drawable.ic_stat_name)
                         .setContentTitle(context.getString(R.string.title_message))
                         .setContentText(context.getString(R.string.content_message_part_1) + " " + PhoneNumberUtils.formatNumber(number, Locale.getDefault().country) + context.getString(R.string.content_message_part_2))
                         .setPriority(NotificationCompat.PRIORITY_HIGH)
