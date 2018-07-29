@@ -2,31 +2,38 @@ package com.goodapp.callblocker.repository
 
 import android.content.Context
 import android.provider.ContactsContract
-import com.goodapp.callblocker.BuildConfig
 import com.goodapp.callblocker.model.NormalCall
 import com.goodapp.callblocker.model.PhoneStatus
 import com.goodapp.callblocker.model.ScamCall
 import com.goodapp.callblocker.model.SuspiciousCall
-import com.goodapp.callblocker.repository.api.ApiResponse
-import com.goodapp.callblocker.repository.api.CnamService
+import com.goodapp.callblocker.repository.api.CNAMService
 import com.goodapp.callblocker.repository.db.CallBlockerDb
 import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import io.reactivex.Observable
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.Retrofit
+import okhttp3.logging.HttpLoggingInterceptor
+
+
 
 
 class CheckPhoneState(private val context: Context) {
 
     private var retrofit: Retrofit
-    private val BASE_URL = "https://api.truecnam.net/api/v1/"
+    private val BASE_URL = "https://api.truecnam.net/"
 
     init {
+
+        val interceptor = HttpLoggingInterceptor()
+        interceptor.level = HttpLoggingInterceptor.Level.BODY
+        val client = OkHttpClient.Builder()
+                .addInterceptor(interceptor)
+                .build()
+
         retrofit = retrofit2.Retrofit.Builder()
                 .baseUrl(BASE_URL)
+                .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .build()
@@ -35,7 +42,7 @@ class CheckPhoneState(private val context: Context) {
     fun isNormalCall(phoneNumber: String): Observable<PhoneStatus> {
 
         return Observable.create<String> {
-            val phoneNumberFormatted = phoneNumber?.replace("\\D+".toRegex(), "")
+            val phoneNumberFormatted = phoneNumber.replace("\\D+".toRegex(), "")
 
             val cursor = context.contentResolver.query(
                     ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
@@ -53,7 +60,7 @@ class CheckPhoneState(private val context: Context) {
 
             if (cursor.count > 0) {
                 while (cursor.moveToNext()) {
-                    var contactNumber: String = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)).replace("\\D+".toRegex(), "")
+                    val contactNumber: String = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)).replace("\\D+".toRegex(), "")
                     if (phoneNumberFormatted == contactNumber) {
                         it.onNext(phoneNumber)
                         it.onComplete()
@@ -73,7 +80,7 @@ class CheckPhoneState(private val context: Context) {
                 .map { it -> it.phoneNumber.replace("\\D+".toRegex(), "") }
                 .filter { it == phoneNumber.replace("\\D+".toRegex(), "") }
                 .flatMap { it ->
-                    retrofit.create(CnamService::class.java)
+                    retrofit.create(CNAMService::class.java)
                             .getCnamInfo(phoneNumber)
                             .map { response -> SuspiciousCall(response, it) }
                             .onErrorReturn { SuspiciousCall(null, phoneNumber = phoneNumber) }
