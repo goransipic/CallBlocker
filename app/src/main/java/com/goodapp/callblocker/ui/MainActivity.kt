@@ -12,6 +12,7 @@ import com.nabinbhandari.android.permissions.Permissions
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(R.style.AppTheme)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main_activity)
         if (savedInstanceState == null) {
