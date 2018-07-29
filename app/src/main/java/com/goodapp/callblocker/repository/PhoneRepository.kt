@@ -7,6 +7,7 @@ import android.arch.persistence.room.Room
 import android.arch.persistence.room.RoomDatabase
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.database.sqlite.SQLiteDatabase
 import android.os.Build
 import android.support.v4.app.NotificationCompat
@@ -21,6 +22,7 @@ import com.goodapp.callblocker.model.PhoneStatus
 import com.goodapp.callblocker.model.ScamCall
 import com.goodapp.callblocker.model.SuspiciousCall
 import com.goodapp.callblocker.repository.db.CallBlockerDb
+import com.goodapp.callblocker.ui.OverlayPhoneActivity
 import io.reactivex.Observable
 
 
@@ -57,17 +59,19 @@ class PhoneRepository(private val context: Context, private val checkPhoneState:
                 }).build()
     }
 
-    fun isOnBlackList(phoneNumber: String) {
+    fun checkPhoneNumber(phoneNumber: String) {
         Observable.concat(
                 checkPhoneState.isNormalCall(phoneNumber),
                 checkPhoneState.isSuspiciousCall(callBlockerDb, phoneNumber),
-                checkPhoneState.isScamCall(callBlockerDb, phoneNumber)).take(1).subscribe(this::process)
+                checkPhoneState.isScamCall(callBlockerDb, phoneNumber))
+                .take(1)
+                .subscribe(this::process)
     }
 
     private fun process(phoneStatus: PhoneStatus) {
         when (phoneStatus) {
             is NormalCall -> processNormalCall(context, phoneStatus.phoneNumber)
-            is SuspiciousCall -> processSuspiciousCall()
+            is SuspiciousCall -> processSuspiciousCall(context,phoneStatus)
             is ScamCall -> processScamCall(context, phoneStatus.phoneNumber)
         }
     }
@@ -105,8 +109,11 @@ class PhoneRepository(private val context: Context, private val checkPhoneState:
         }
     }
 
-    private fun processSuspiciousCall() {
-        Log.d(PhoneRepository::class.java.simpleName,"processSuspiciousCall")
+    private fun processSuspiciousCall(ctx: Context, suspiciousCall: SuspiciousCall) {
+        if (suspiciousCall.phoneNumber != null){
+            context.startActivity(Intent(context,OverlayPhoneActivity::class.java))
+        }
+
     }
 
     private fun processNormalCall(ctx: Context, number: String?) {

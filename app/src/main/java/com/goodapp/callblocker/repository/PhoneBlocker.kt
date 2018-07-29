@@ -39,7 +39,7 @@ class PhoneBlocker : Worker() {
 
     //Derived classes should override these to respond to specific events of interest
     private fun onIncomingCallStarted(ctx: Context, number: String, start: Date?) {
-        phoneRepository.isOnBlackList(number)
+        phoneRepository.checkPhoneNumber(number)
     }
 
     private fun onOutgoingCallStarted(ctx: Context, number: String?, start: Date?) {
