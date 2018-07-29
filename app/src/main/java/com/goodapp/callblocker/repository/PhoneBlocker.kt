@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.Worker
 import com.goodapp.callblocker.CallBlockerApp
 import android.telephony.TelephonyManager
+import com.goodapp.callblocker.ui.OverlayLiveData
 import java.util.*
 
 
@@ -43,7 +44,7 @@ class PhoneBlocker : Worker() {
     }
 
     private fun onOutgoingCallStarted(ctx: Context, number: String?, start: Date?) {
-
+        OverlayLiveData.sInstance.postValue(true)
     }
 
     private fun onIncomingCallEnded(ctx: Context, number: String?, start: Date?, end: Date) {}
