@@ -5,4 +5,6 @@
     <string name="content_message_part_2">, but Phone Blocker has block the call.</string>
     <string name="blocked_calls">Blocked calls</string>
     <string name="suspicious_calls">Suspicious calls</string>
+    <string name="close">Close</string>
+    <string name="suspicious_call">Suspicious Call</string>
 </resources>
